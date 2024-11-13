@@ -111,22 +111,30 @@ void liberaVetor (void *vet)
 void multMatVet (MatRow mat, Vetor v, int m, int n, Vetor res)
 {
     
-  /* Efetua a multiplicação com unroll & jam */
+  /* Efetua a multiplicação */
   if (res) {
-      for (int i=0; i < m-m%UF; i+=UF) {
-        for (int j=0; j < n; ++j) {
-            for(int k=i; k < UF; k++) //unroll & jam
-                res[k] += mat[n*k + j] * v[j];
+    for (int i=0; i < m; ++i)
+      for (int j=0; j < n; ++j)
+        res[i] += mat[n*i + j] * v[j];
+  }
+}
+
+void multMatVet_otim (MatRow mat, Vetor v, int m, int n, Vetor res)
+{
+  if (res) {
+      for (int i=0; i+UF-1 < m; i+=UF) {
+          for (int j=0; j < n; ++j) {
+              for (int k=i; k < UF; ++k)
+                  res[k] += mat[n*k + j] * v[j];
         }
       }
 
-      for(int i=m-m%UF; i < m; ++i) { //remainder loop
-          for(int j=0; j < n; ++j)
+      for (int i=m-m%UF; i < m; ++i) {
+          for (int j=0; j < n; ++j)
               res[i] += mat[n*i + j] * v[j];
       }
   }
 }
-
 
 /**
  *  Funcao multMatMat: Efetua multiplicacao de duas matrizes 'n x n' 
@@ -143,14 +151,34 @@ void multMatMat (MatRow A, MatRow B, int n, MatRow C)
 
   /* Efetua a multiplicação */
   for (int i=0; i < n; ++i)
-      for (int j=0; j < n-n%4; j+=4) {
-          for (int k=0; k < n; ++k) {
-	        C[i*n+j] += A[i*n+k] * B[k*n+j];
-	        C[i*n+j+1] += A[i*n+k] * B[k*n+j+1];
-	        C[i*n+j+2] += A[i*n+k] * B[k*n+j+2];
-	        C[i*n+j+3] += A[i*n+k] * B[k*n+j+3];
-          }
-      }
+    for (int j=0; j < n; ++j)
+      for (int k=0; k < n; ++k)
+	C[i*n+j] += A[i*n+k] * B[k*n+j];
+}
+
+void multMatMat_otim (MatRow A, MatRow B, int n, MatRow C)
+{
+    int istart, iend, jstart, jend, kstart, kend;
+    //loop externo do bloco
+    for (int ii=0; ii < n/BS; ++ii) {
+        istart = ii*BS; iend = istart+BS;
+        for (int jj=0; jj < n/BS; ++jj) {
+            jstart = jj*BS, jend = jstart+BS;
+            for (int kk=0; kk < BS; ++kk) {
+                kstart = kk*BS, kend = kstart+BS;
+
+                //loop interno ao bloco
+                for (int i=istart; i < iend; ++i) {
+                    for (int j=jstart; j+UF-1 < jend; j+=UF) {
+                        for (int k=kstart; k < kend; ++k) {
+                            for (int u=0; u < UF; ++u) //stride
+	                            C[i*n+j] += A[i*n+k] * B[k*n+j];
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 
