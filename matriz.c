@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h> // Para uso de função 'memset()'
 
 #include "matriz.h"
@@ -124,8 +123,8 @@ void multMatVet_otim (MatRow mat, Vetor v, int m, int n, Vetor res)
   if (res) {
       for (int i=0; i+UF-1 < m; i+=UF) {
           for (int j=0; j < n; ++j) {
-              for (int k=i; k < UF; ++k)
-                  res[k] += mat[n*k + j] * v[j];
+              for (int u=i; u < UF; ++u)
+                  res[u] += mat[n*u + j] * v[j];
         }
       }
 
@@ -153,32 +152,45 @@ void multMatMat (MatRow A, MatRow B, int n, MatRow C)
   for (int i=0; i < n; ++i)
     for (int j=0; j < n; ++j)
       for (int k=0; k < n; ++k)
-	C[i*n+j] += A[i*n+k] * B[k*n+j];
+        C[i*n+j] += A[i*n+k] * B[k*n+j];
 }
 
 void multMatMat_otim (MatRow A, MatRow B, int n, MatRow C)
 {
     int istart, iend, jstart, jend, kstart, kend;
-    //loop externo do bloco
-    for (int ii=0; ii < n/BS; ++ii) {
+    int b = BS;
+    b = n/b;
+
+    //loop do bloco
+    for (int ii=0; ii < b; ++ii) {
         istart = ii*BS; iend = istart+BS;
-        for (int jj=0; jj < n/BS; ++jj) {
+        for (int jj=0; jj < b; ++jj) {
             jstart = jj*BS, jend = jstart+BS;
-            for (int kk=0; kk < BS; ++kk) {
+            for (int kk=0; kk < b; ++kk) {
                 kstart = kk*BS, kend = kstart+BS;
 
-                //loop interno ao bloco
+                //loop interno ao bloco, BS eh multiplo de UF
                 for (int i=istart; i < iend; ++i) {
-                    for (int j=jstart; j+UF-1 < jend; j+=UF) {
+                    for (int j=jstart; j < jend; j+=UF) {
                         for (int k=kstart; k < kend; ++k) {
                             for (int u=0; u < UF; ++u) //stride
-	                            C[i*n+j] += A[i*n+k] * B[k*n+j];
+                                C[i*n+j+u] += A[i*n+k] * B[k*n+j+u];
                         }
                     }
                 }
             }
         }
     }
+
+  for (int i=n-n%BS; i < n; ++i)
+    for (int j=0; j < n; ++j)
+      for (int k=0; k < n; ++k)
+        C[i*n+j] += A[i*n+k] * B[k*n+j];
+
+  for (int i=0; i < n; ++i)
+    for (int j=n-n%BS; j < n; ++j)
+      for (int k=0; k < n; ++k)
+        C[i*n+j] += A[i*n+k] * B[k*n+j];
 }
 
 
