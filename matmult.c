@@ -76,29 +76,29 @@ int main (int argc, char *argv[])
     printf ("=================================\n\n");
 #endif /* _DEBUG_ */
 
-    t3 = timestamp();
+    t1 = timestamp();
     LIKWID_MARKER_START("MVM 1");
     multMatVet (mRow_1, mRow_2, n, n, resMat);
     LIKWID_MARKER_STOP("MVM 1");
-    t3 = timestamp() - t3;
+    t1 = timestamp() - t1;
 
-    t1 = timestamp();
+    t2 = timestamp();
     LIKWID_MARKER_START("MMM 1");
     multMatMat (mRow_1, mRow_2, n, resMat);
     LIKWID_MARKER_STOP("MMM 1");
-    t1 = timestamp() - t1;
+    t2 = timestamp() - t2;
 
-    t4 = timestamp();
+    t3 = timestamp();
     LIKWID_MARKER_START("MVM 2");
     multMatVet_otim (mRow_1, mRow_2, n, n, resMat2);
     LIKWID_MARKER_STOP("MVM 2");
-    t4 = timestamp() - t4;
+    t3 = timestamp() - t3;
 
-    t2 = timestamp();
+    t4 = timestamp();
     LIKWID_MARKER_START("MMM 2");
     multMatMat_otim (mRow_1, mRow_2, n, resMat2);
     LIKWID_MARKER_STOP("MMM 2");
-    t2 = timestamp() - t2;
+    t4 = timestamp() - t4;
 
 
 
@@ -115,7 +115,7 @@ int main (int argc, char *argv[])
   liberaVetor ((void*) res);
   liberaVetor ((void*) res2);
 
-  fprintf(stdout, "%f, %f\n%f, %f\n", t1, t2, t3, t4);
+  fprintf(stdout, "%f %f %f %f\n", t1, t2, t3, t4);
   LIKWID_MARKER_CLOSE;
   return 0;
 }
